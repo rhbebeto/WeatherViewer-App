@@ -3,9 +3,7 @@
 Trabalho prático da disciplina de **Programação III**, desenvolvido com base no Capítulo 7 do livro "Android for Programmers", adaptado para consumir uma API REST personalizada hospedada na AWS.
 
 ## 👨‍💻 Integrantes
-* **Alunos:**
-* Roberto Henrique Duarte
-* João Victor Costa Arruda
+* **Aluno:** Roberto Henrique Duarte
 * **Professor:** Eduardo Henrique Marques Ferreira
 * **Curso:** Sistemas de Informação
 * **Disciplina:** Programação III (2025/02)
