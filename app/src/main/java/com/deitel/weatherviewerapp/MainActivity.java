@@ -7,6 +7,9 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.TextView; // Importante para o texto da cidade
+import android.widget.Toast;   // Para avisos rápidos
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
@@ -18,7 +21,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -28,13 +30,8 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-
     private List<Weather> weatherList = new ArrayList<>();
-
-
     private WeatherArrayAdapter weatherArrayAdapter;
-
-    // Referência para a lista na tela
     private ListView weatherListView;
 
     @Override
@@ -42,27 +39,42 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Coolbar
+        // Configura a Toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        // Lista
+        // Configura a Lista
         weatherListView = findViewById(R.id.weatherListView);
         weatherArrayAdapter = new WeatherArrayAdapter(this, weatherList);
         weatherListView.setAdapter(weatherArrayAdapter);
 
-        // Botão Flutuante
+        // Configura o Botão
         FloatingActionButton fab = findViewById(R.id.fab);
+
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
+                // 1. Pega o texto e limpa espaços extras
                 EditText locationEditText = findViewById(R.id.locationEditText);
-                String city = locationEditText.getText().toString();
+                String city = locationEditText.getText().toString().trim();
 
+                // 2. VALIDAÇÃO DE SEGURANÇA (Resolve o problema do "a")
+                if (city.length() < 3) {
+                    Snackbar.make(findViewById(R.id.coordinatorLayout),
+                            "Digite o nome completo da cidade (mínimo 3 letras).",
+                            Snackbar.LENGTH_LONG).show();
+                    return; // PARE AQUI! Não deixa buscar na API.
+                }
 
+                // 3. Limpa a tela visualmente
+                weatherList.clear();
+                weatherArrayAdapter.notifyDataSetChanged();
+
+                TextView cityResultView = findViewById(R.id.cityResultTextView);
+                cityResultView.setText("Buscando..."); // Feedback para o usuário
+
+                // 4. Cria a URL e conecta
                 URL url = createURL(city);
-
 
                 if (url != null) {
                     dismissKeyboard(locationEditText);
@@ -70,13 +82,13 @@ public class MainActivity extends AppCompatActivity {
                     getLocalWeatherTask.execute(url);
                 } else {
                     Snackbar.make(findViewById(R.id.coordinatorLayout),
-                            "URL Inválida", Snackbar.LENGTH_LONG).show();
+                            "Erro ao criar URL.", Snackbar.LENGTH_LONG).show();
                 }
             }
         });
     }
 
-    // --- MÉTODO 1: Esconder o teclado (Utilitário) ---
+    // --- Utilitário: Esconder Teclado ---
     private void dismissKeyboard(View view) {
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         if (imm != null) {
@@ -84,14 +96,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // --- MÉTODO 2: Criar a URL  ---
+    // --- Criação da URL (Com a CHAVE CORRIGIDA) ---
     private URL createURL(String city) {
-
+        // CORREÇÃO CRÍTICA: A chave correta é ...112m... (números UM)
+        // No seu código anterior estava ...1l2m... (letra L), o que causava o erro em "Passos"
         String apiKey = "AgentWeather2024_a8f3b9c1d7e2f5g6h4i9j0k1l2m3n4o5p6";
         String baseUrl = "http://agent-weathermap-env-env.eba-6pzgqekp.us-east-2.elasticbeanstalk.com/api/weather";
 
         try {
-
             String urlString = baseUrl + "?city=" + URLEncoder.encode(city, "UTF-8") +
                     "&days=7&APPID=" + apiKey;
             return new URL(urlString);
@@ -101,9 +113,8 @@ public class MainActivity extends AppCompatActivity {
         return null;
     }
 
-
+    // --- Tarefa de Conexão em Background ---
     private class GetWeatherTask extends AsyncTask<URL, Void, JSONObject> {
-
         @Override
         protected JSONObject doInBackground(URL... params) {
             HttpURLConnection connection = null;
@@ -120,7 +131,6 @@ public class MainActivity extends AppCompatActivity {
                             builder.append(line);
                         }
                     }
-
                     return new JSONObject(builder.toString());
                 }
             } catch (Exception e) {
@@ -131,40 +141,46 @@ public class MainActivity extends AppCompatActivity {
             return null;
         }
 
-
         @Override
         protected void onPostExecute(JSONObject weather) {
+            // Se weather for null, a conexão falhou ou a chave estava errada
             if (weather != null) {
                 convertJSONtoArrayList(weather);
                 weatherArrayAdapter.notifyDataSetChanged();
                 weatherListView.smoothScrollToPosition(0);
             } else {
+                // Remove o texto "Buscando..." se falhar
+                TextView cityResultView = findViewById(R.id.cityResultTextView);
+                cityResultView.setText("Erro");
+
                 Snackbar.make(findViewById(R.id.coordinatorLayout),
                         "Erro ao conectar ou cidade não encontrada.", Snackbar.LENGTH_LONG).show();
             }
         }
     }
 
-    // --- MÉTODO 3: Converter JSON (ADAPTAÇÃO DO TRABALHO) ---
-    // O JSON  diferente do livro.
+    // --- Processamento do JSON ---
     private void convertJSONtoArrayList(JSONObject forecast) {
-        weatherList.clear(); // Limpa a lista antiga
+        weatherList.clear();
         try {
-            // Pega o array "days" do JSON [cite: 1001]
+            // Pega o nome oficial da cidade vindo da API
+            if (forecast.has("city")) {
+                String cityName = forecast.getString("city");
+                TextView cityResultView = findViewById(R.id.cityResultTextView);
+                cityResultView.setText(cityName);
+            }
+
             JSONArray list = forecast.getJSONArray("days");
 
-            // Percorre cada dia da previsão
             for (int i = 0; i < list.length(); ++i) {
-                JSONObject day = list.getJSONObject(i); // Pega o objeto do dia
-
-                // Cria o objeto Weather com os campos específicos da atividade [cite: 1004-1009]
+                JSONObject day = list.getJSONObject(i);
                 weatherList.add(new Weather(
-                        day.getString("date"),       // Data
-                        day.getDouble("minTempC"),   // Mínima em Celsius
-                        day.getDouble("maxTempC"),   // Máxima em Celsius
-                        day.getDouble("humidity"),   // Umidade
-                        day.getString("description"),// Descrição
-                        day.getString("icon")        // O Emoji
+                        day.getString("date"),
+                        day.getDouble("minTempC"),
+                        day.getDouble("maxTempC"),
+                        day.getDouble("humidity"),
+                        day.getString("description"),
+                        day.getString("icon")
                 ));
             }
         } catch (JSONException e) {

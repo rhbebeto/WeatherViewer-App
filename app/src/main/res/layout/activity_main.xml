@@ -33,7 +33,6 @@
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/locationEditText"
                 android:layout_width="match_parent"
@@ -42,6 +41,18 @@
                 android:inputType="text"
                 android:maxLines="1" />
         </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:id="@+id/cityResultTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"
+            android:gravity="center"
+            android:text=""
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black" />
 
         <ListView
             android:id="@+id/weatherListView"
