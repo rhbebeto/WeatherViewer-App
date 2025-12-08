@@ -51,7 +51,7 @@ O objetivo deste aplicativo é consumir um Web Service RESTful de previsão do t
 ### Passo a Passo
 1.  Clone este repositório:
     ```bash
-    git clone [https://github.com/rhbebeto/WeatherViewer-App](https://github.com/rhbebeto/WeatherViewer-App)
+    git clone [https://github.com/rhbebeto/WeatherViewer-App.git](https://github.com/rhbebeto/WeatherViewer-App.git)
     ```
 2.  Abra o projeto no **Android Studio**.
 3.  Aguarde o sincronismo do Gradle.
